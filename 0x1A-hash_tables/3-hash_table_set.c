@@ -1,51 +1,53 @@
 #include "hash_tables.h"
-#include <stdlib.h>
-#include <string.h>
 
 /**
- * hash_table_set - adds an element to the hash table
- * @ht: The hash table
- * @key: The key of the new element
- * @value: The value of the new element
+ * hash_table_set - Add element to hash table
+ * @ht: hash table
+ * @key: key
+ * @value: value associated with key
  *
- * Return: 1 on success, 0 on failure
+ * Return: 1if succeeded, 0 otherwise
  */
-int
-hash_table_set(hash_table_t *ht, const char *key, const char *value)
+int hash_table_set(hash_table_t *ht, const char *key, const char *value)
 {
-	unsigned long int index = 0;
-	hash_node_t *new_hash_node = NULL;
-	hash_node_t *tmp = NULL;
+	hash_node_t *new_element;
+	char *tmp_value;
+	unsigned long int i, KeyIndex;
 
-	if (!ht || !key || !(*key) || !value)
+	if (ht == NULL || key == NULL || value == NULL)
 		return (0);
 
-	index = key_index((unsigned char *)key, ht->size);
-	tmp = ht->array[index];
+	tmp_value = strdup(value);
+	if (tmp_value == NULL)
+		return (0);
 
-	/* check if key exists */
-	while (tmp && strcmp(tmp->key, key) != 0)
-		tmp = tmp->next;
+	KeyIndex = key_index((const unsigned char *)key, ht->size);
 
-	/* update value if key already exists */
-	if (tmp)
+	i = KeyIndex;
+	while (ht->array[i])
 	{
-		free(tmp->value);
-		tmp->value = strdup(value);
-		return (1);
+		if (strcmp(ht->array[i]->key, key) == 0)
+		{
+			free(ht->array[i]->value);
+			ht->array[i]->value = tmp_value;
+			return (1);
+		}
+		i++;
 	}
-
-	/* add new node if key not found */
-
-	new_hash_node = malloc(sizeof(*new_hash_node));
-	if (!new_hash_node)
+	new_element = malloc(sizeof(hash_node_t));
+	if (new_element == NULL)
+	{
+		free(tmp_value);
 		return (0);
-
-	new_hash_node->key = strdup(key);
-	new_hash_node->value = strdup(value);
-
-	new_hash_node->next = ht->array[index];
-	ht->array[index] = new_hash_node;
-
+	}
+	new_element->key = strdup(key);
+	if (new_element->key == NULL)
+	{
+		free(new_element);
+		return (0);
+	}
+	new_element->value = tmp_value;
+	new_element->next = ht->array[KeyIndex];
+	ht->array[KeyIndex] = new_element;
 	return (1);
 }
